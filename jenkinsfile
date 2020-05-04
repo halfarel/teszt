@@ -1,0 +1,35 @@
+pipeline {
+           agent { label 'slave' }
+           stages {
+                stage("install") {
+                     steps {
+                          sh 'sudo yum install epel-release -y'
+                          sh 'sudo yum install  nodejs -y'
+                     }
+                }
+                stage("clone"){
+                    steps {
+                        sh 'rm -rf /var/lib/jenkins/git/'
+                        sh 'rm -rf /var/lib/jenkins/service/'
+                        sh 'sudo git clone https://github.com/tothti/jenkins.git /var/lib/jenkins/git'                      
+                        sh 'sudo git clone https://github.com/halfarel/systemd /var/lib/jenkins/service'
+                    }
+                }
+                stage("run"){
+                    steps {
+                        sh 'sudo cp /var/lib/jenkins/service/indexjs.service /etc/systemd/system/indexjs.service'
+                        sh 'sudo cp /var/lib/jenkins/git/index.js /tmp'
+                        sh 'sudo chmod +x /tmp/index.js'
+                        sh 'sudo chmod 644 /etc/systemd/system/indexjs.service'
+                        sh 'sudo systemctl start indexjs'                        
+                    }
+                }
+                stage("open firewall"){
+                    steps {
+                        sh 'sudo firewall-cmd --add-port=8888/tcp --permanent'
+                        sh 'sudo firewall-cmd --reload'
+                    }
+                }
+                    
+           }
+      }
